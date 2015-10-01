@@ -32,10 +32,7 @@ int read_occurrences_file( const std::string& filename_ )
 
 int main( int argc, char* argv[] )
 {
-    if (argc != 2) {
-        std::cerr << "None or Too many arguments passed\n.";
-        exit(EXIT_FAILURE);
-    }
+  // check parameters
 
   std::string pattern( argv[ 1 ] );  
   int files_count;
