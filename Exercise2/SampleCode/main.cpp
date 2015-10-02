@@ -15,8 +15,16 @@ void occurrences_in_file( const std::string& filename_, const std::string& patte
   // generate string containing the command to be passed as argument to /bin/sh
 
   // call exec() to execute the command in search_command as argument to /bin/sh
+    exec_status = execl("/bin/sh",
+          "/bin/sh",
+          "-c",
+          search_command,
+          (char*)0);
 
   // check correct termination
+    if (exec_status == 1) {
+        std::cerr << "Problem with Exec\n";
+    }
 }
 
 
