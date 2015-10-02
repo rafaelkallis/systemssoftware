@@ -27,16 +27,35 @@ int read_occurrences_file( const std::string& filename_ )
   // ...
 }
 
+//TODO: untested
+void argument_check(int argc, const& char* argv[]){
+    if (argc <3) {
+        std::cerr <<    "Too little arguments." <<
+                        "Provide at least a pattern and a filename\n";
+        exit(EXIT_FAILURE);
+    }
+    for (; argc > 1; argc--;) {
+        ifstream file(argv[argc]);
+        if (!file.good()) {
+            std::cerr << "File " << argv[argc] << "doesn't exist.\n";
+            file.close();
+            exit(EXIT_FAILURE);
+        }else{
+            file.close();
+        }
+    }
+}
 
 // entry point of the application
 
 int main( int argc, char* argv[] )
 {
   // check parameters
+    argument_check(argc, argv);
 
   std::string pattern( argv[ 1 ] );  
   int files_count;
-  // files_count = ...
+  // files_count = argc - 2;
  
   int* status = new int[ files_count ];
   pid_t* pids = new pid_t[ files_count ];
