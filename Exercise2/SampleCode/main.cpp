@@ -77,11 +77,14 @@ int main( int argc, char* argv[] )
         }
     }
 
-  // wait for termination and check termination
-  for( int f = 0; f < files_count; f++ )
-  {
-    // ...
-  }
+    // wait for termination and check termination
+    for( int f = 0; f < files_count; f++ )
+    {
+        wait(&status[f]);
+        if (status[f] == EXIT_FAILURE) {
+            std::cerr << "Abnormal Behaviour: pattern recognision on a file was unsuccesful\n";
+        }
+    }
   
 
   // open results files, compute overall number of occurrences and print it to standard output
