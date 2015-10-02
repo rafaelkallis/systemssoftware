@@ -11,19 +11,21 @@ void occurrences_in_file( const std::string& filename_, const std::string& patte
     int my_pid, exec_status;
     my_pid = getpid();
 
-    std::string search_command("grep -o PATTERN FILENAME | wc -l > result-" + my_pid + ".txt");
-  // generate string containing the command to be passed as argument to /bin/sh
+    
+    // generate string containing the command to be passed as argument to /bin/sh
+    std::string search_command("grep -o " + pattern_ + " " + filename_ + " | wc -l > result-" + std::to_string(my_pid) + ".txt");
 
-  // call exec() to execute the command in search_command as argument to /bin/sh
-    exec_status = execl("/bin/sh",
-          "/bin/sh",
-          "-c",
-          search_command,
-          (char*)0);
-
-  // check correct termination
-    if (exec_status == 1) {
-        std::cerr << "Problem with Exec\n";
+    // call exec() to execute the command in search_command as argument to /bin/sh
+    if (fork()) {
+        exec_status = execl("/bin/sh",
+                            "/bin/sh",
+                            "-c",
+                            search_command.c_str(),
+                            (char*)0);
+        
+        // check correct termination
+        std::cerr << "Exec has returned.\n";
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -42,20 +44,20 @@ int read_occurrences_file( const std::string& filename_ )
 }
 
 //TODO: untested
-void argument_check(int argc, const& char* argv[]){
+void argument_check(int argc, char* argv[]){
     if (argc <3) {
         std::cerr <<    "Too little arguments." <<
                         "Provide at least a pattern and a filename\n";
         exit(EXIT_FAILURE);
     }
-    for (; argc > 1; argc--;) {
-        ifstream file(argv[argc]);
-        if (!file.good()) {
-            std::cerr << "File " << argv[argc] << "doesn't exist.\n";
+    for (; argc > 1;) {
+        std::ifstream file(argv[--argc]);
+        if (file.good()) {
+            file.close();
+        }else{
+            std::cerr << "File " << argv[argc] << " doesn't exist.\n";
             file.close();
             exit(EXIT_FAILURE);
-        }else{
-            file.close();
         }
     }
 }
@@ -88,7 +90,7 @@ int main( int argc, char* argv[] )
             exit(EXIT_FAILURE);
         }else if (pids[f] == 0) {
             occurrences_in_file(std::string(argv[2+f]), pattern);
-            exit(EXIT_SUCCESS)
+            exit(EXIT_SUCCESS);
         }
     }
 
@@ -105,7 +107,7 @@ int main( int argc, char* argv[] )
     // open results files, compute overall number of occurrences and print it to standard output
     for(int f=0;f < files_count; f++)
     {
-        total_occurences += read_occurrences_file("result-"+pids[f]+".txt");
+        total_occurences += read_occurrences_file("result-"+std::to_string(pids[f])+".txt");
     }
     
     std::cout << "Total Occurences of " << pattern << " are " << total_occurences << ".\n";
