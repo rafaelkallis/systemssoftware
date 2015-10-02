@@ -8,8 +8,8 @@
 
 void occurrences_in_file( const std::string& filename_, const std::string& pattern_ )
 {
-  int my_pid;
-  // my_pid = ...
+    int my_pid, exec_status;
+    my_pid = getpid();
 
   std::string search_command;
   // generate string containing the command to be passed as argument to /bin/sh
@@ -58,6 +58,7 @@ int main( int argc, char* argv[] )
 
     std::string pattern( argv[ 1 ] );
     int files_count;
+    int total_occurences = 0;
     files_count = argc - 2;
  
     int* status = new int[ files_count ];
@@ -90,8 +91,8 @@ int main( int argc, char* argv[] )
   // open results files, compute overall number of occurrences and print it to standard output
   // ...
   
-  delete[] status;
-  delete[] pids;
+    delete[] status;
+    delete[] pids;
   
   return 0;
 }
