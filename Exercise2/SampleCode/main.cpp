@@ -50,8 +50,8 @@ void argument_check(int argc, char* argv[]){
                         "Provide at least a pattern and a filename\n";
         exit(EXIT_FAILURE);
     }
-    for (; argc > 1;) {
-        std::ifstream file(argv[--argc]);
+    while (--argc > 1) {
+        std::ifstream file(argv[argc]);
         if (file.good()) {
             file.close();
         }else{
