@@ -55,7 +55,7 @@ int main( int argc, char* argv[] )
 
   std::string pattern( argv[ 1 ] );  
   int files_count;
-  // files_count = argc - 2;
+  files_count = argc - 2;
  
   int* status = new int[ files_count ];
   pid_t* pids = new pid_t[ files_count ];
