@@ -50,21 +50,32 @@ void argument_check(int argc, const& char* argv[]){
 
 int main( int argc, char* argv[] )
 {
-  // check parameters
+    // check parameters
+    /*
+     Terminates if parameters are invalid
+     */
     argument_check(argc, argv);
 
-  std::string pattern( argv[ 1 ] );  
-  int files_count;
-  files_count = argc - 2;
+    std::string pattern( argv[ 1 ] );
+    int files_count;
+    files_count = argc - 2;
  
-  int* status = new int[ files_count ];
-  pid_t* pids = new pid_t[ files_count ];
+    int* status = new int[ files_count ];
+    pid_t* pids = new pid_t[ files_count ];
 
-  // spawn files_count processes
-  for( int f = 0; f < files_count; f++ )
-  {
-    // call fork and invoke occurrences_in_file() from child process
-  }
+    // spawn files_count processes
+    for( int f = 0; f < files_count; f++ )
+    {
+        // call fork and invoke occurrences_in_file() from child process
+        pids[f] = fork();
+        if (pids[f] == -1) {
+            std::cerr << "Error on fork()\n";
+            exit(EXIT_FAILURE);
+        }else if (pids[f] == 0) {
+            occurrences_in_file(std::string(argv[2+f]), pattern);
+            exit(EXIT_SUCCESS)
+        }
+    }
 
   // wait for termination and check termination
   for( int f = 0; f < files_count; f++ )
