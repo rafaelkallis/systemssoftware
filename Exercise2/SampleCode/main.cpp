@@ -95,11 +95,10 @@ int main( int argc, char* argv[] )
     {
         wait(&status[f]);
         if (status[f] == EXIT_FAILURE) {
-            std::cerr << "Abnormal Behaviour: pattern recognision on a file was unsuccesful\n";
+            std::cerr << argv[2+f] << " had abnormal behaviour during pattern recognision.\n";
         }
     }
   
-
     // open results files, compute overall number of occurrences and print it to standard output
     for(int f=0;f < files_count; f++)
     {
