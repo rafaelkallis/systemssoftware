@@ -43,12 +43,15 @@ int read_occurrences_file( const std::string& filename_ )
     return occurences;
 }
 
-//TODO: untested
-void argument_check(int argc, char* argv[]){
+
+/*
+ *  performs a check through command line arguments
+ */
+int argument_check(int argc, char* argv[]){
     if (argc <3) {
-        std::cerr <<    "Too little arguments." <<
+        std::cerr <<    "Too few arguments. " <<
                         "Provide at least a pattern and a filename\n";
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     while (--argc > 1) {
         std::ifstream file(argv[argc]);
@@ -57,26 +60,25 @@ void argument_check(int argc, char* argv[]){
         }else{
             std::cerr << "File " << argv[argc] << " doesn't exist.\n";
             file.close();
-            exit(EXIT_FAILURE);
+            return EXIT_FAILURE;
         }
     }
+    return EXIT_SUCCESS;
 }
-
-// entry point of the application
 
 int main( int argc, char* argv[] )
 {
-    // check parameters
     /*
      Terminates if parameters are invalid
      */
-    argument_check(argc, argv);
+    if(argument_check(argc, argv)){
+        std::cerr << "Terminating.\n";
+        exit(EXIT_FAILURE);
+    }
 
     std::string pattern( argv[ 1 ] );
-    int files_count;
+    int files_count = argc - 2;;
     int total_occurences = 0;
-    files_count = argc - 2;
- 
     int* status = new int[ files_count ];
     pid_t* pids = new pid_t[ files_count ];
 
@@ -85,12 +87,13 @@ int main( int argc, char* argv[] )
     {
         // call fork and invoke occurrences_in_file() from child process
         pids[f] = fork();
-        if (pids[f] == -1) {
-            std::cerr << "Error on fork()\n";
-            exit(EXIT_FAILURE);
-        }else if (pids[f] == 0) {
+        if (pids[f] == 0) {
             occurrences_in_file(std::string(argv[2+f]), pattern);
             exit(EXIT_SUCCESS);
+            
+        }else if (pids[f] < 0) {
+            std::cerr << "Error on fork()\n";
+            exit(EXIT_FAILURE);
         }
     }
 
