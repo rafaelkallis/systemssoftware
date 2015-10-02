@@ -32,7 +32,13 @@ void occurrences_in_file( const std::string& filename_, const std::string& patte
 
 int read_occurrences_file( const std::string& filename_ )
 {
-  // ...
+    int occurences = 0;
+    std::ifstream in(filename_);
+    if (in.is_open()) {
+        in >> occurences;
+    }
+    in.close();
+    return occurences;
 }
 
 //TODO: untested
