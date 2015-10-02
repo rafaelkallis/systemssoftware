@@ -11,7 +11,7 @@ void occurrences_in_file( const std::string& filename_, const std::string& patte
     int my_pid, exec_status;
     my_pid = getpid();
 
-  std::string search_command;
+    std::string search_command("grep -o PATTERN FILENAME | wc -l > result-" + my_pid + ".txt");
   // generate string containing the command to be passed as argument to /bin/sh
 
   // call exec() to execute the command in search_command as argument to /bin/sh
