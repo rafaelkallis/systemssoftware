@@ -102,8 +102,13 @@ int main( int argc, char* argv[] )
     }
   
 
-  // open results files, compute overall number of occurrences and print it to standard output
-  // ...
+    // open results files, compute overall number of occurrences and print it to standard output
+    for(int f=0;f < files_count; f++)
+    {
+        total_occurences += read_occurrences_file("result-"+pids[f]+".txt");
+    }
+    
+    std::cout << "Total Occurences of " << pattern << " are " << total_occurences << ".\n";
   
     delete[] status;
     delete[] pids;
