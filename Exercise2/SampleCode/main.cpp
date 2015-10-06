@@ -93,9 +93,9 @@ int main( int argc, char* argv[] )
     // wait for termination and check termination
     for( int f = 0; f < files_count; f++ )
     {
-        wait(&status[f]);
+        waitpid(pids[f], &status[f],0);
         if (status[f] == EXIT_FAILURE) {
-            std::cerr << argv[2+f] << " had abnormal behaviour during pattern recognision.\n";
+            std::cerr << argv[2+f] << " had abnormal behaviour during pattern recognition.\n";
         }
     }
   
