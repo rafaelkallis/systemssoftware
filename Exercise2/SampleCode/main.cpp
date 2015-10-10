@@ -17,7 +17,8 @@ void occurrences_in_file( const std::string& filename_, const std::string& patte
           "-c",
           search_command.c_str(),
           (char*)0);
-        
+    
+    
     // check correct termination
     std::cerr << "Exec has returned.\n";
 }
