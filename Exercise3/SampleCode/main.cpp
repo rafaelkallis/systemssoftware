@@ -15,37 +15,24 @@
 // using a window of size window_size_
 // the function returns the new filtered value p'(r_,c_)
 float median_filter_pixel( const image_matrix& input_image_,
-                           int r_,
-                           int c_,
-                           int window_size_ )
+                           const int& r_,
+                           const int& c_,
+                           const int& window_size_ )
 {
-  //float filtered_value;
     std::vector<float> values;
+    const int max_row = input_image_.get_n_rows();
+    const int max_col = input_image_.get_n_cols();
     
-    for(int i=r_-window_size_;i < r_+window_size_;i--){
-        for (int j=c_-window_size_; j < c_+window_size_; j--) {
-            if (i > 0 && j > 0 && i < input_image_.get_n_rows() && j < input_image_.get_n_cols()) {
-                values.push_back(input_image_.get_pixel(i, j));
+    for(int r = r_ - window_size_;r < r_ + window_size_;r++){
+        for (int c = c_ - window_size_; c < c_ + window_size_; c++) {
+            if (r > 0 && c > 0 && r < max_row && c < max_col) {
+                values.push_back(input_image_.get_pixel(r, c));
             }
         }
     }
     std::nth_element(values.begin(), values.begin() + values.size()/2, values.end());
     return values[values.size()/2];
 }
-
-
-
-void test(const image_matrix& filtered_image, const int& rows, const int& cols){
-    for (int i=rows; i>=0; i--) {
-        for (int j=cols; j>=0; j--) {
-            if (filtered_image.get_pixel(i, j) != median_filter_pixel(filtered_image, i, j, 2)) {
-                printf("Problem\n");
-            }
-        }
-    }
-}
-
-
 
 // struct passed to each thread, containing the information necessary
 // to process its assigned range
@@ -58,7 +45,7 @@ public:
          int end_y,
          int window_size,
          image_matrix original_image,
-         image_matrix & filtered_image)
+         image_matrix * filtered_image)
     :start_x(start_x),
     start_y(start_y),
     end_x(end_x),
@@ -74,11 +61,11 @@ public:
     int get_end_y(){return end_y;}
     int get_window_size(){return window_size;}
     image_matrix get_original_image(){return original_image;}
-    void set_pixel(int x,int y,float value){filtered_image.set_pixel(y, x, value);}
+    image_matrix * get_p_filtered_image(){return filtered_image;}
 private:
     int start_x,start_y,end_x,end_y;
     int window_size;
-    image_matrix original_image, filtered_image;
+    image_matrix original_image, * filtered_image;
 
 };
 
@@ -87,11 +74,14 @@ private:
 void* func( void* arg ) 
 {
   task t_arg = *( task* )arg;
-
-    for (int i=t_arg.get_start_x(); i<t_arg.get_end_x(); i++) {
-        for (int j=t_arg.get_start_y(); j<t_arg.get_end_y(); j++) {
-            //float f_px= median_filter_pixel(t_arg.get_original_image(), j, i, t_arg.get_window_size())
-            t_arg.set_pixel(j,i,median_filter_pixel(t_arg.get_original_image(), j, i, t_arg.get_window_size()));
+    image_matrix original_image = t_arg.get_original_image();
+    image_matrix * filtered_image = t_arg.get_p_filtered_image();
+    int window_size = t_arg.get_window_size();
+    
+    for (int r=t_arg.get_start_y(); r<t_arg.get_end_y(); r++) {
+        for (int c=t_arg.get_start_x(); c<t_arg.get_end_x(); c++) {
+            float f_px= median_filter_pixel(original_image, r, c, window_size);
+            filtered_image->set_pixel(r,c,f_px);
         }
     }
 
@@ -181,12 +171,14 @@ int main( int argc, char* argv[] )
   image_matrix filtered_image;
    
   // read input matrix
-  read_input_image( input_filename, input_image );
+    if(!read_input_image( input_filename, input_image )){
+        std::cerr << input_filename << " not found.\n";
+    }
 
   // get dimensions of the image matrix
   int n_rows = input_image.get_n_rows();
   int n_cols = input_image.get_n_cols();
-
+    
   filtered_image.resize( n_rows, n_cols );
 
   // start with the actual processing
@@ -217,14 +209,9 @@ int main( int argc, char* argv[] )
       
       for (int i=0; i < n_threads; i++) {
                       //Starting X, Starting Y,             Ending X,   Ending Y
-          t[i]=new task(0,          i*(n_rows/n_threads),   n_cols,     ((i+1)*(n_rows/n_threads))-1,   window_size,input_image,filtered_image);
+          t[i]=new task(0,          i*(n_rows/n_threads),   n_cols,     (i+1)*(n_rows/n_threads),   window_size,input_image,&filtered_image);
       }
       
-//      t[0] = new task(0,            0,          n_cols/2-1, n_rows/2-1, window_size,input_image,filtered_image);
-//      t[1] = new task(n_cols/2,     0,          n_cols,     n_rows/2-1, window_size,input_image,filtered_image);
-//      t[2] = new task(0,            n_rows/2,   n_cols/2-1, n_rows,     window_size,input_image,filtered_image);
-//      t[3] = new task(n_cols/2,     n_rows/2,   n_rows,     n_cols,     window_size,input_image,filtered_image);
-
     // create threads
       for (int i =0; i < N_THREADS; i++) {
           if (pthread_create(&thread[i], NULL, func, (void*)t[i]) != 0) {
