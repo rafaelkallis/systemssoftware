@@ -3,13 +3,23 @@
 #include <fstream>
 
 #include <pthread.h>
-
 #include "image_matrix.hpp"
 
-#define N_THREADS 4
-
-
-
+float median_float_vector(std::vector<float>& values){
+    size_t size = values.size();
+    
+    //std::sort(values.begin(), values.end());
+    if (size % 2 ==0) {
+        std::nth_element(values.begin(), values.begin() + size/2 -1 , values.end());
+        std::nth_element(values.begin(), values.begin() + size/2    , values.end());
+        return (values[size/2-1]+values[size/2])/2;
+    }else{
+        std::nth_element(values.begin(), values.begin() + size/2    , values.end());
+        return values[size/2];
+    }
+    
+    //return size%2==0 ? (values[size/2-1] + values[size/2]) /2 : values[size/2];
+}
 
 // function that performs the median filtering on pixel p(r_,c_) of input_image_,
 // using a window of size window_size_
@@ -20,18 +30,30 @@ float median_filter_pixel( const image_matrix& input_image_,
                            const int& window_size_ )
 {
     std::vector<float> values;
+    //size_t size;
     const int max_row = input_image_.get_n_rows();
     const int max_col = input_image_.get_n_cols();
     
     for(int r = r_ - window_size_;r < r_ + window_size_;r++){
         for (int c = c_ - window_size_; c < c_ + window_size_; c++) {
             if (r > 0 && c > 0 && r < max_row && c < max_col) {
-                values.push_back(input_image_.get_pixel(r, c));
+                float pixel = input_image_.get_pixel(r, c);
+                values.push_back(pixel);
             }
         }
     }
-    std::nth_element(values.begin(), values.begin() + values.size()/2, values.end());
-    return values[values.size()/2];
+    //size = values.size();
+    std::sort(values.begin(), values.end());
+    if (values.size() % 2 ==0) {
+        //std::nth_element(values.begin(), values.begin() + size/2 -1 , values.end());
+        //std::nth_element(values.begin(), values.begin() + size/2    , values.end());
+        return (values[values.size()/2-1]+values[values.size()/2])/2;
+    }else{
+        //std::nth_element(values.begin(), values.begin() + size/2    , values.end());
+        return values[values.size()/2];
+    }
+    //std::nth_element(values.begin(), values.begin() + values.size()/2, values.end());
+    //return median_float_vector(values);
 }
 
 // struct passed to each thread, containing the information necessary
@@ -213,14 +235,14 @@ int main( int argc, char* argv[] )
       }
       
     // create threads
-      for (int i =0; i < N_THREADS; i++) {
+      for (int i =0; i < n_threads; i++) {
           if (pthread_create(&thread[i], NULL, func, (void*)t[i]) != 0) {
               std::cerr << " Error on creation of thread " << i << "\n";
           }
       }
 
     // wait for termination of threads
-      for (int i=0; i< N_THREADS; i++) {
+      for (int i=0; i< n_threads; i++) {
           pthread_join(thread[i], NULL);
       }
     // ***********************************
