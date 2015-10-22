@@ -1,25 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-
+#include <math.h>
 #include <pthread.h>
 #include "image_matrix.hpp"
-
-float median_float_vector(std::vector<float>& values){
-    size_t size = values.size();
-    
-    //std::sort(values.begin(), values.end());
-    if (size % 2 ==0) {
-        std::nth_element(values.begin(), values.begin() + size/2 -1 , values.end());
-        std::nth_element(values.begin(), values.begin() + size/2    , values.end());
-        return (values[size/2-1]+values[size/2])/2;
-    }else{
-        std::nth_element(values.begin(), values.begin() + size/2    , values.end());
-        return values[size/2];
-    }
-    
-    //return size%2==0 ? (values[size/2-1] + values[size/2]) /2 : values[size/2];
-}
 
 // function that performs the median filtering on pixel p(r_,c_) of input_image_,
 // using a window of size window_size_
@@ -30,30 +14,29 @@ float median_filter_pixel( const image_matrix& input_image_,
                            const int& window_size_ )
 {
     std::vector<float> values;
-    //size_t size;
     const int max_row = input_image_.get_n_rows();
     const int max_col = input_image_.get_n_cols();
+    const int floor_window_size = floor(window_size_/2);
+    float median;
     
-    for(int r = r_ - window_size_;r < r_ + window_size_;r++){
-        for (int c = c_ - window_size_; c < c_ + window_size_; c++) {
-            if (r > 0 && c > 0 && r < max_row && c < max_col) {
+    for(int r = r_ - floor_window_size;r <= r_ + floor_window_size;r++){
+        for (int c = c_ - floor_window_size; c <= c_ + floor_window_size; c++){
+            if (r >= 0 && c >= 0 && r < max_row && c < max_col) {
                 float pixel = input_image_.get_pixel(r, c);
                 values.push_back(pixel);
             }
         }
     }
-    //size = values.size();
     std::sort(values.begin(), values.end());
-    if (values.size() % 2 ==0) {
-        //std::nth_element(values.begin(), values.begin() + size/2 -1 , values.end());
-        //std::nth_element(values.begin(), values.begin() + size/2    , values.end());
-        return (values[values.size()/2-1]+values[values.size()/2])/2;
-    }else{
-        //std::nth_element(values.begin(), values.begin() + size/2    , values.end());
-        return values[values.size()/2];
+    if (values.size() % 2 ==0)
+    {
+        median = (values[values.size()/2-1]+values[values.size()/2])/2;
     }
-    //std::nth_element(values.begin(), values.begin() + values.size()/2, values.end());
-    //return median_float_vector(values);
+    else
+    {
+        median = values[values.size()/2];
+    }
+    return median;
 }
 
 // struct passed to each thread, containing the information necessary
@@ -74,7 +57,7 @@ public:
     end_y(end_y),
     window_size(window_size),
     original_image(original_image),
-    filtered_image(filtered_image)
+    p_filtered_image(filtered_image)
     {};
     ~task(){};
     int get_start_x(){return start_x;}
@@ -83,14 +66,13 @@ public:
     int get_end_y(){return end_y;}
     int get_window_size(){return window_size;}
     image_matrix get_original_image(){return original_image;}
-    image_matrix * get_p_filtered_image(){return filtered_image;}
+    image_matrix * get_p_filtered_image(){return p_filtered_image;}
 private:
     int start_x,start_y,end_x,end_y;
     int window_size;
-    image_matrix original_image, * filtered_image;
+    image_matrix original_image, * p_filtered_image;
 
 };
-
 
 // function run by each thread
 void* func( void* arg ) 
@@ -174,87 +156,87 @@ bool write_filtered_image( const image_matrix& image_out_ )
 
 int main( int argc, char* argv[] )
 {
-  if( argc < 5 )
-  {
-    std::cerr << "Not enough arguments provided to " << argv[ 0 ] << ". Terminating." << std::endl;
-    return 1;
-  }
+    if( argc < 5 )
+    {
+        std::cerr << "Not enough arguments provided to " << argv[ 0 ] << ". Terminating." << std::endl;
+        return 1;
+    }
 
-  // get input arguments
-  std::string input_filename( argv[ 1 ] );
-  int window_size = std::stoi( argv[ 2 ] );
-  int n_threads = std::stoi( argv[ 3 ] );
-  int mode = std::stoi( argv[ 4 ] );
+    // get input arguments
+    std::string input_filename( argv[ 1 ] );
+    int window_size = std::stoi( argv[ 2 ] );
+    int n_threads = std::stoi( argv[ 3 ] );
+    int mode = std::stoi( argv[ 4 ] );
 
-  std::cout << argv[ 0 ] << " called with parameters " << input_filename << " " << window_size << " " << n_threads << " " << mode << std::endl;
+    std::cout << argv[ 0 ] << " called with parameters " << input_filename << " " << window_size << " " << n_threads << " " << mode << std::endl;
 
-  // input and the filtered image matrices
-  image_matrix input_image;
-  image_matrix filtered_image;
+    // input and the filtered image matrices
+    image_matrix input_image;
+    image_matrix filtered_image;
    
-  // read input matrix
+    // read input matrix
     if(!read_input_image( input_filename, input_image )){
         std::cerr << input_filename << " not found.\n";
     }
 
-  // get dimensions of the image matrix
-  int n_rows = input_image.get_n_rows();
-  int n_cols = input_image.get_n_cols();
+    // get dimensions of the image matrix
+    int n_rows = input_image.get_n_rows();
+    int n_cols = input_image.get_n_cols();
     
-  filtered_image.resize( n_rows, n_cols );
+    filtered_image.resize( n_rows, n_cols );
 
-  // start with the actual processing
-  if( mode == 0 )
-  {
-    // ******    SERIAL VERSION     ******
-
-    for( int r = 0; r < n_rows; r++ )
+    // start with the actual processing
+    if( mode == 0 )
     {
-      for( int c = 0; c < n_cols; c++ )
-      {
-        float p_rc_filt = median_filter_pixel( input_image, r, c, window_size );
-        filtered_image.set_pixel( r, c, p_rc_filt );
-      }
+        // ******    SERIAL VERSION     ******
+
+        for( int r = 0; r < n_rows; r++ )
+        {
+            for( int c = 0; c < n_cols; c++ )
+            {
+                float p_rc_filt = median_filter_pixel( input_image, r, c, window_size );
+                filtered_image.set_pixel( r, c, p_rc_filt );
+            }
+        }
+
+    // ***********************************
+    }
+    else if( mode == 1 )
+    {
+        // ******   PARALLEL VERSION    ******
+
+        // declaration of pthread_t variables for the threads
+        pthread_t thread[n_threads];
+
+        // declaration of the struct variables to be passed to the threads
+        task * t[n_threads];
+      
+        for (int i=0; i < n_threads; i++) {
+                        //Starting X, Starting Y,             Ending X,   Ending Y
+            t[i]=new task(0,          i*(n_rows/n_threads),   n_cols,     (i+1)*(n_rows/n_threads),   window_size,input_image, &filtered_image);
+        }
+      
+        // create threads
+        for (int i =0; i < n_threads; i++) {
+            if (pthread_create(&thread[i], NULL, func, (void*)t[i]) != 0) {
+                std::cerr << " Error on creation of thread " << i << "\n";
+            }
+        }
+
+        // wait for termination of threads
+        for (int i=0; i< n_threads; i++) {
+            pthread_join(thread[i], NULL);
+        }
+        // ***********************************
+    }
+    else
+    {
+        std::cerr << "Invalid mode. Terminating" << std::endl;
+        return 1;
     }
 
-    // ***********************************
-  }
-  else if( mode == 1 )
-  {
-    // ******   PARALLEL VERSION    ******
+    // write filtered matrix to file
+    write_filtered_image( filtered_image );
 
-    // declaration of pthread_t variables for the threads
-      pthread_t thread[n_threads];
-
-    // declaration of the struct variables to be passed to the threads
-      task * t[n_threads];
-      
-      for (int i=0; i < n_threads; i++) {
-                      //Starting X, Starting Y,             Ending X,   Ending Y
-          t[i]=new task(0,          i*(n_rows/n_threads),   n_cols,     (i+1)*(n_rows/n_threads),   window_size,input_image,&filtered_image);
-      }
-      
-    // create threads
-      for (int i =0; i < n_threads; i++) {
-          if (pthread_create(&thread[i], NULL, func, (void*)t[i]) != 0) {
-              std::cerr << " Error on creation of thread " << i << "\n";
-          }
-      }
-
-    // wait for termination of threads
-      for (int i=0; i< n_threads; i++) {
-          pthread_join(thread[i], NULL);
-      }
-    // ***********************************
-  }
-  else
-  {
-    std::cerr << "Invalid mode. Terminating" << std::endl;
-    return 1;
-  }
-
-  // write filtered matrix to file
-  write_filtered_image( filtered_image );
-
-  return 0;
+    return 0;
 }
