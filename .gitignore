@@ -1,2 +1,10 @@
 
 Exercise2/SampleCode/testdemo
+
+.metadata/*
+
+*.prefs
+
+*.project
+
+*.cproject
