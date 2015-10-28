@@ -8,7 +8,7 @@
 #include <omp.h>
 
 #include "image_matrix.hpp"
-#include "timetracker/timetracker.h"
+#include "timetracker.h"
 
 #define X (0)
 #define Y (1)
@@ -185,7 +185,7 @@ int main( int argc, char* argv[] )
 
     const int input_images_count = argc - 4;
     std::vector< std::string > filenames;
-    for( std::size_t f = 0; f < input_images_count; f++ )
+    for( size_t f = 0; f < input_images_count; f++ )
     {
         filenames.push_back( argv[ 4 + f ] );
     }
