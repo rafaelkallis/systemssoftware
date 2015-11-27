@@ -8,3 +8,7 @@ Exercise2/SampleCode/testdemo
 *.project
 
 *.cproject
+*.iml
+*.idea
+
+Exercise6/CMakeLists.txt
