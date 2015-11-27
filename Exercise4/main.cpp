@@ -64,12 +64,12 @@ void median_filter_images( const std::vector< image_matrix >& input_images_,
                      int n_threads_,
 			   const int mode_ )
 {
-    n_threads_ = mode_ == 0 ? 1 : (mode_ == 1 ? std::min((int)input_images_.size(), n_threads_) : n_threads_);
     if (mode_ == 0) {
         for (int i=0; i < input_images_.size(); i++) {
-            int start[2] =  {0,0};
-            int end[2]   =  {input_images_[i].get_n_cols()-1,
-                input_images_[i].get_n_rows()-1};
+            int start[2] =  {0,
+            				0};
+            int end[2]   =  {input_images_[i].get_n_cols(),
+                			input_images_[i].get_n_rows()};
             median_filter_image(input_images_.at(i),
                                 output_images_.at(i),
                                 window_size_,
@@ -78,8 +78,8 @@ void median_filter_images( const std::vector< image_matrix >& input_images_,
             
         }
     }else if(mode_ == 1){
-        #pragma omp parallel for default(shared) num_threads(n_threads_)
-        for (int i=0; i < n_threads_; i++) {
+        #pragma omp parallel for num_threads(n_threads_)
+        for (int i=0; i < input_images_.size(); i++) {
             int start[2] =  {0,
                             0};
             int end[2]   =  {input_images_[i].get_n_cols(),
@@ -93,7 +93,7 @@ void median_filter_images( const std::vector< image_matrix >& input_images_,
         }
     }else if (mode_ == 2){
         for (int i=0; i < input_images_.size(); i++) {
-            #pragma omp parallel for default(shared) num_threads(n_threads_)
+            #pragma omp parallel for num_threads(n_threads_)
             for (int t=0; t < n_threads_; t++) {
                 int start[2]=   {0,
                                 t*(input_images_[i].get_n_rows()/n_threads_)};
