@@ -1,0 +1,4 @@
+The server initializes the server socket and waits for 2 clients to connect.
+As soon as two clients connect start_game() gets executed and sends a signal to both client to signal the beginning of the game.
+In the main game loop, each player is either waiting of playing. In each turn, the server sends the current board and one status flag (a total of 10 4-byte integers) to each player.
+If a player has to send a move, the client first checks if his input is allowed. If it is, it sends it back to the server. After each turn, the server checks if there's a winner, if not, the game continues until there's a tie.
